@@ -2,8 +2,9 @@ huggingfacehubApiToken: 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
 
 llmUservice:
   image:
-    repository: image-registry.openshift-image-registry.svc:5000/test-paulina/llm-tgi
+    repository: image-registry.openshift-image-registry.svc:5000/codegen-helm/llm-tgi
     tag: "latest"
+    gitRef: 3e24908e35df3eafc3624574f365bdb454de451a
 
 servingRuntime:
   name: model

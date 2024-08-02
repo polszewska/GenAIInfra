@@ -1,0 +1,27 @@
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: llm-tgi-server
+  namespace: {{ .Values.global.namespace }}
+spec:
+  output:
+    to:
+      kind: "ImageStreamTag"
+      name: "llm-tgi:latest"
+  failedBuildsHistoryLimit: 5
+  successfulBuildsHistoryLimit: 5
+  nodeSelector: null
+  postCommit: {}
+  resources: {}
+  runPolicy: SerialLatestOnly
+  source:
+    git:
+      ref: {{ .Values.llmUservice.image.gitRef }}
+      uri: https://github.com/opea-project/GenAIComps.git
+    type: Git
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: comps/llms/text-generation/tgi/Dockerfile
+  triggers:
+  - type: ConfigChange

@@ -8,6 +8,8 @@ metadata:
     app.kubernetes.io/instance: codegen
     app.kubernetes.io/version: "1.0.0"
     app.kubernetes.io/managed-by: Helm
+  annotations:
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"llm-tgi:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"llm-tgi-server\")].image"}]'
 spec:
   replicas: 1
   selector:
@@ -43,7 +45,7 @@ spec:
               value: /tmp/bundle.crt
           securityContext: {}
           image: "{{ .Values.llmUservice.image.repository }}:{{ .Values.llmUservice.image.tag }}"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: llm-uservice
               containerPort: 9000
