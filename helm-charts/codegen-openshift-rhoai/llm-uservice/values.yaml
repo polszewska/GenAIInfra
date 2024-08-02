@@ -1,0 +1,19 @@
+huggingfacehubApiToken: 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
+
+llmUservice:
+  image:
+    repository: image-registry.openshift-image-registry.svc:5000/test-paulina/llm-tgi
+    tag: "latest"
+
+servingRuntime:
+  name: magicoder
+  namespace: codegen-helm
+
+global:
+  clusterDomain: rojo.igk.internal
+  namespace: codegen-helm
+
+job:
+  image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+
+serviceAccountName:

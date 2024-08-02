@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codegen
+  labels:
+    helm.sh/chart: codegen-0.1.0
+    app.kubernetes.io/name: codegen
+    app.kubernetes.io/instance: codegen
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: codegen
+      app.kubernetes.io/instance: codegen
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: codegen
+        app.kubernetes.io/instance: codegen
+    spec:
+      securityContext: null
+      containers:
+        - name: codegen
+          env:
+            - name: LLM_SERVICE_HOST_IP
+              value: codegen-llm-uservice
+          securityContext: null
+          image: "{{ .Values.codegen.image.repository }}:{{ .Values.codegen.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: codegen
+              containerPort: 7778
+              protocol: TCP
+          resources: null

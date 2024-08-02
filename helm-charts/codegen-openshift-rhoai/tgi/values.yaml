@@ -1,0 +1,6 @@
+huggingfacehubApiToken: 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
+
+image:
+  repository: image-registry.openshift-image-registry.svc:5000/test-paulina/codegen
+  tag: "latest"
+

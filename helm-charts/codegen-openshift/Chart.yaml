@@ -1,0 +1,15 @@
+apiVersion: v2
+name: codegen
+description: A Helm chart for deploying codegen on Red Hat OpenShift
+dependencies:
+  - name: tgi
+    version: 1.0
+    repository: "file://tgi"
+  - name: llm-uservice
+    version: 1.0
+    repository: "file://llm-uservice"
+  - name: ui-server
+    version: 1.0
+    repository: "file://ui-server"
+type: application
+version: 1.0
