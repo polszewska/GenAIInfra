@@ -1,0 +1,66 @@
+llmUservice:
+  image:
+    repository: "insert-your-image-here"
+    tag: "latest"
+    gitRef: main
+
+servingRuntime:
+  name: "insert-name-of-deployed-model-here"
+  namespace: "insert-project-name-where-model-is-deployed"
+
+global:
+  clusterDomain: "insert-your-cluster-domain-here"
+
+job:
+  image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+
+serviceAccountName: codegen-sa
+
+rbac:
+  roles:
+    - name: codegen-rhoai-role
+      createRole: true
+      apiGroups:
+        - '""'
+        - '"apps"'
+        - '"batch"'
+        - '"machineconfiguration.openshift.io"'
+        - '"rbac.authorization.k8s.io"'
+        - '"security.openshift.io"'
+        - '"datasciencecluster.opendatahub.io"'
+        - '"operator.knative.dev"'
+        - '"build.openshift.io"'
+      scope:
+        cluster: true
+      resources:
+        - namespaces
+        - secrets
+        - datascienceclusters
+        - clusterrolebindings
+        - knativeservings
+        - jobs
+        - buildconfigs
+        - builds
+        - buildconfigs/instantiate
+      verbs:
+        - "create"
+        - "get"
+        - "list"
+        - "patch"
+        - "update"
+        - "use"
+        - "watch"
+  roleBindings:
+    - name: codegen-rhoai-rolebind
+      createBinding: true
+      scope:
+        cluster: true
+        namespace: ""
+      subjects:
+        kind: ServiceAccount
+        name: codegen-sa
+        namespace: insert-your-namespace-here
+        apiGroup: ""
+      roleRef:
+        kind: ClusterRole
+        name: codegen-rhoai-role

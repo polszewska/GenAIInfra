@@ -1,0 +1,5 @@
+llmUservice:
+  image:
+    repository: "insert-your-image-here"
+    tag: "latest"
+    gitRef: main

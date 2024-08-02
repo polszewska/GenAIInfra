@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codegen-llm-uservice
+  labels:
+    helm.sh/chart: llm-uservice-0.1.0
+    app.kubernetes.io/name: llm-uservice
+    app.kubernetes.io/instance: codegen
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"llm-tgi:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"llm-tgi-server\")].image"}]'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llm-uservice
+      app.kubernetes.io/instance: codegen
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: llm-uservice
+        app.kubernetes.io/instance: codegen
+    spec:
+      securityContext: {}
+      containers:
+        - name: codegen
+          env:
+            - name: TGI_LLM_ENDPOINT
+              value: "http://codegen-tgi:8080"
+            - name: HUGGINGFACEHUB_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: HUGGING_FACE_HUB_TOKEN
+                  name: hf-token
+            - name: PYTHONPATH
+              value: /home/user/.local/lib/python3.11/site-packages:/home/user
+            - name: HOME
+              value: /tmp/home
+          securityContext: {}
+          image: "{{ .Values.llmUservice.image.repository }}:{{ .Values.llmUservice.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: llm-uservice
+              containerPort: 9000
+              protocol: TCP
+          startupProbe:
+            exec:
+              command:
+                - curl
+                - http://codegen-tgi:8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 120
+          volumeMounts:
+          - mountPath: /tmp/home
+            name: local-dir
+          resources: {}
+      volumes:
+      - emptyDir:
+          sizeLimit: 5Gi
+        name: local-dir

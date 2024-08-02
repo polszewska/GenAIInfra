@@ -1,0 +1,8 @@
+global:
+  clusterDomain: "insert-your-cluster-domain-here"
+
+codegen:
+  image:
+    repository: "insert-your-image-here"
+    tag: "latest"
+    gitRef: main
