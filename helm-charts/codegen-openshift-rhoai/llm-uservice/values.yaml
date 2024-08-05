@@ -1,10 +1,10 @@
-huggingfacehubApiToken: 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
+huggingfacehubApiToken: "insert-your-token"
 
 llmUservice:
   image:
     repository: image-registry.openshift-image-registry.svc:5000/codegen-helm/llm-tgi
     tag: "latest"
-    gitRef: 3e24908e35df3eafc3624574f365bdb454de451a
+    gitRef: main
 
 servingRuntime:
   name: model

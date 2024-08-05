@@ -1,4 +1,4 @@
-huggingfacehubApiToken: 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
+huggingfacehubApiToken: "insert-your-token"
 
 global:
   namespace: helm-codegen
