@@ -1,5 +1,9 @@
+global:
+  namespace: codegen-helm
+  clusterDomain: rojo.igk.internal
+
 codegen:
   image:
-    repository: image-registry.openshift-image-registry.svc:5000/test-paulina/codegen
+    repository: image-registry.openshift-image-registry.svc:5000/codegen-helm/codegen
     tag: "latest"
-
+    gitRef: main

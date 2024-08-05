@@ -1,9 +1,0 @@
-ui:
-  image:
-    repository: image-registry.openshift-image-registry.svc:5000/codegen-helm/codegen-ui
-    tag: "latest"
-
-global:
-  clusterDomain: rojo.igk.internal
-
-namespace: codegen-helm
