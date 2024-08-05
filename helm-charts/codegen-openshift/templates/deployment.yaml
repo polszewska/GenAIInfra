@@ -27,7 +27,7 @@ spec:
             - name: LLM_SERVICE_HOST_IP
               value: codegen-llm-uservice
           securityContext: null
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.codegen.image.repository }}:{{ .Values.codegen.image.tag }}"
           imagePullPolicy: IfNotPresent
           ports:
             - name: codegen

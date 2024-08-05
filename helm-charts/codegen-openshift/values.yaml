@@ -1,7 +1,9 @@
-huggingfacehub_api_token: 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
+global:
+  namespace: helm-codegen
+  clusterDomain: rojo.igk.internal
 
-image:
-  repository: image-registry.openshift-image-registry.svc:5000/test-paulina/codegen
-  pullPolicy: IfNotPresent
-  tag: "latest"
-
+codegen:
+  image:
+    repository: image-registry.openshift-image-registry.svc:5000/helm-codegen/codegen
+    tag: "latest"
+    gitRef: main

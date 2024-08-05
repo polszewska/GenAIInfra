@@ -1,7 +1,1 @@
-huggingfacehub_api_token: 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
-
-image:
-  repository: image-registry.openshift-image-registry.svc:5000/test-paulina/codegen
-  pullPolicy: IfNotPresent
-  tag: "latest"
-
+huggingfacehubApiToken: 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
