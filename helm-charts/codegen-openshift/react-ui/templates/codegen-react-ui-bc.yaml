@@ -1,0 +1,41 @@
+## cd GenAIExamples/CodeGen/docker/ui/
+#docker build -t opea/codegen-react-ui:latest --build-arg BACKEND_SERVICE_ENDPOINT=$BACKEND_SERVICE_ENDPOINT -f ./docker/Dockerfile.react .
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: {{ .Values.image.repository }}
+spec:
+  lookupPolicy:
+    local: true
+---
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  output:
+    to:
+      kind: "ImageStreamTag"
+      name: "{{ .Values.image.repository}}:{{ .Values.image.tag }}"
+  failedBuildsHistoryLimit: 5
+  successfulBuildsHistoryLimit: 5
+  nodeSelector: null
+  postCommit: {}
+  resources: {}
+  runPolicy: SerialLatestOnly
+  source:
+    contextDir: CodeGen/docker/ui
+    git:
+      ref: {{ .Values.image.git_ref }}
+      uri: https://github.com/opea-project/GenAIExamples.git
+    type: Git
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: docker/Dockerfile.react
+      buildArgs:
+      - name: BACKEND_SERVICE_ENDPOINT
+        value: https://codegen-react-ui-route/v1/codegen
+  triggers:
+  - type: ConfigChange
