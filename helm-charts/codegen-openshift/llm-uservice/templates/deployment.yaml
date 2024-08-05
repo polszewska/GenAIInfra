@@ -27,13 +27,13 @@ spec:
             - name: TGI_LLM_ENDPOINT
               value: "http://codegen-tgi:8080"
             - name: HUGGINGFACEHUB_API_TOKEN
-              value: "{{ .Values.huggingfacehub_api_token }}"
+              value: "{{ .Values.huggingfacehubApiToken }}"
             - name: PYTHONPATH
               value: /home/user/.local/lib/python3.11/site-packages:/home/user
             - name: HOME
               value: /tmp/home
           securityContext: {}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.llmUservice.image.repository }}:{{ .Values.llmUservice.image.tag }}"
           imagePullPolicy: IfNotPresent
           ports:
             - name: llm-uservice

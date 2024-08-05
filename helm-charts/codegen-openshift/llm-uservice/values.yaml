@@ -1,6 +1,10 @@
-huggingfacehub_api_token: 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
+huggingfacehubApiToken: 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
 
-image:
-  repository: image-registry.openshift-image-registry.svc:5000/test-paulina/llm-tgi
-  pullPolicy: IfNotPresent
-  tag: "latest"
+global:
+  namespace: helm-codegen
+
+llmUservice:
+  image:
+    repository: image-registry.openshift-image-registry.svc:5000/helm-codegen/llm-tgi
+    tag: "latest"
+    gitRef: main
