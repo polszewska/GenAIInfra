@@ -5,6 +5,8 @@ metadata:
   name: {{ include "codegen-react-ui.fullname" . }}
   labels:
     {{- include "codegen-react-ui.labels" . | nindent 4 }}
+  annotations:
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"react-ui:{{ .Values.reactUi.image.tag }}"},"fieldPath":"spec.template.spec.containers[?(@.name==\"{{ .Chart.Name }}\")].image"}]'
 spec:
   selector:
     matchLabels:
