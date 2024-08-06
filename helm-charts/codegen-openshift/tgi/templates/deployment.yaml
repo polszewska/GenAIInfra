@@ -25,7 +25,7 @@ spec:
         - name: tgi
           env:
             - name: MODEL_ID
-              value: ise-uiuc/Magicoder-S-DS-6.7B
+              value: "{{ .Values.modelId }}"
             - name: PORT
               value: "8080"
             - name: NUMBA_CACHE_DIR
