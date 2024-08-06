@@ -25,7 +25,7 @@ spec:
         - name: tgi
           env:
             - name: MODEL_ID
-              value: "{{ .Values.modelId }}"
+              value: "{{ .Values.model.id }}"
             - name: PORT
               value: "8080"
             - name: NUMBA_CACHE_DIR
@@ -45,5 +45,5 @@ spec:
           resources: {}
       volumes:
       - emptyDir:
-          sizeLimit: 50Gi
+          sizeLimit: {{ .Values.model.size }}
         name: model-volume

@@ -1,2 +1,5 @@
 huggingfacehubApiToken: "insert-your-token"
-modelId: ise-uiuc/Magicoder-S-DS-6.7B
+
+model:
+  id: ise-uiuc/Magicoder-S-DS-6.7B
+  size: 50Gi
