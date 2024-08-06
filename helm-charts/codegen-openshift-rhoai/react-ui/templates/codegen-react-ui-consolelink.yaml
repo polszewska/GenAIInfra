@@ -1,7 +1,7 @@
 apiVersion: console.openshift.io/v1
 kind: ConsoleLink
 metadata:
-  name: {{ include "codegen-react-ui.fullname" . }}
+  name: {{ include "codegen-react-ui.fullname" . }}-{{ randAlphaNum 12 | lower }}
 spec:
   href: https://codegen-react-ui-{{ .Release.Namespace }}.apps.{{ .Values.global.clusterDomain }}
   location: ApplicationMenu
