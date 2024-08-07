@@ -3,7 +3,7 @@ apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
   name: llm-tgi
-  namespace: {{ .Values.global.namespace }}
+  namespace: {{ .Release.namespace }}
 spec:
   lookupPolicy:
     local: true

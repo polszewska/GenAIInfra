@@ -1,5 +1,4 @@
 global:
-  namespace: codegen-helm
   clusterDomain: rojo.igk.internal
 
 codegen:
