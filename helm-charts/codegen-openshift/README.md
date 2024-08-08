@@ -20,11 +20,11 @@ Optionally you may customize model and its size:
 export MODELNAME="ise-uiuc/Magicoder-S-DS-6.7B"
 export MODELSIZE="50Gi"
 
---set tgi.model.id=${MODELNAME}
---set tgi.model.size=${MODELSIZE}
-
 # To run on Xeon
 helm install codegen codegen-openshift --set codegen.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/codegen --set llm-uservice.llmUservice.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/llm-tgi --set codegen-react-ui.reactUi.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/react-ui --set global.clusterDomain=${CLUSTERDOMAIN} --set global.huggingfacehubApiToken=${HFTOKEN}
+
+Optionally add:
+--set tgi.model.id=${MODELNAME} --set tgi.model.size=${MODELSIZE}
 ```
 
 ## Verify
