@@ -17,14 +17,14 @@ export HFTOKEN="insert-your-huggingface-token-here"
 
 # (Optionally) You may customize model and its size:
 
-export MODELNAME="ise-uiuc/Magicoder-S-DS-6.7B"
+export MODEL_ID="ise-uiuc/Magicoder-S-DS-6.7B"
 export MODELSIZE="50Gi"
 
 # To run on Xeon
 helm install codegen codegen-openshift --set codegen.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/codegen --set llm-uservice.llmUservice.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/llm-tgi --set codegen-react-ui.reactUi.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/react-ui --set global.clusterDomain=${CLUSTERDOMAIN} --set global.huggingfacehubApiToken=${HFTOKEN}
 
 # (Optionally) Add if you customize model and its size:
---set tgi.model.id=${MODELNAME} --set tgi.model.size=${MODELSIZE}
+--set tgi.model.id=${MODEL_ID} --set tgi.model.size=${MODELSIZE}
 ```
 
 ## Verify
