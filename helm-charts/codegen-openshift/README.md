@@ -32,4 +32,4 @@ helm install codegen codegen-openshift --set codegen.image.repository=image-regi
 To verify the installation, run the command `oc get pods` to make sure all pods are running. Wait about 5 minutes for building images. When 3 pods achieve Completed status, the rest with services should go to Running.
 
 ## Launch the UI
-To access the frontend, find the route for ui-server with command `oc get routes` and open it in the browser.
+To access the frontend, find the route for react-ui with command `oc get routes` and open it in the browser.
