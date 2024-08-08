@@ -3,11 +3,11 @@
 # Declare variables to be passed into your templates.
 
 global:
-  clusterDomain: rojo.igk.internal
+  clusterDomain: "insert-your-cluster-domain-here"
 
 reactUi:
   image:
-    repository: image-registry.openshift-image-registry.svc:5000/helm-codegen/react-ui
+    repository: "insert-your-image-here"
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: "latest"

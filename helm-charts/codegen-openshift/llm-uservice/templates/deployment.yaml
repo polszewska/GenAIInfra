@@ -27,7 +27,7 @@ spec:
             - name: TGI_LLM_ENDPOINT
               value: "http://codegen-tgi:8080"
             - name: HUGGINGFACEHUB_API_TOKEN
-              value: "{{ .Values.huggingfacehubApiToken }}"
+              value: "{{ .Values.global.huggingfacehubApiToken }}"
             - name: PYTHONPATH
               value: /home/user/.local/lib/python3.11/site-packages:/home/user
             - name: HOME
