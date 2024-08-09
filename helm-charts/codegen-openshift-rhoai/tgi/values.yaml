@@ -1,1 +1,2 @@
-huggingfacehubApiToken: "insert-your-token"
+global:
+  huggingfacehubApiToken: "insert-your-huggingface-token-here"

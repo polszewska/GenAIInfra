@@ -1,8 +1,6 @@
-huggingfacehubApiToken: "insert-your-token"
-
 llmUservice:
   image:
-    repository: image-registry.openshift-image-registry.svc:5000/codegen-helm/llm-tgi
+    repository: "insert-your-image-here"
     tag: "latest"
     gitRef: main
 
@@ -11,7 +9,8 @@ servingRuntime:
   namespace: codegen-helm
 
 global:
-  clusterDomain: rojo.igk.internal
+  clusterDomain: "insert-your-cluster-domain-here"
+  huggingfacehubApiToken: "insert-your-huggingface-token-here"
 
 job:
   image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest

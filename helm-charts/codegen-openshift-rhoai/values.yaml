@@ -1,8 +1,8 @@
 global:
-  clusterDomain: rojo.igk.internal
+  clusterDomain: "insert-your-cluster-domain-here"
 
 codegen:
   image:
-    repository: image-registry.openshift-image-registry.svc:5000/codegen-helm/codegen
+    repository: "insert-your-image-here"
     tag: "latest"
     gitRef: main
