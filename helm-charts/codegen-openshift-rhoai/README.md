@@ -79,7 +79,7 @@ To install the chart, back to OpenShift CLI and run the following:
 cd GenAIInfra/helm-charts/
 
 export NAMESPACE="insert-your-namespace-here"
-export CLUSTERDOMAIN="insert-your-cluster-domain-here"
+export CLUSTERDOMAIN="$(oc get Ingress.config.openshift.io/cluster -o jsonpath='{.spec.domain}' | sed 's/^apps.//')"
 export MODELNAME="insert-name-of-deployed-model-here"
 export PROJECT="insert-project-name-where-model-is-deployed"
 
