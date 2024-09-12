@@ -12,7 +12,7 @@ cd GenAIInfra/helm-charts/
 helm dependency update codegen-openshift
 
 export NAMESPACE="insert-your-namespace-here"
-export CLUSTERDOMAIN="insert-your-cluster-domain-here"
+export CLUSTERDOMAIN="$(oc get Ingress.config.openshift.io/cluster -o jsonpath='{.spec.domain}' | sed 's/^apps.//')"
 export HFTOKEN="insert-your-huggingface-token-here"
 
 # (Optionally) You may customize model and its size:
