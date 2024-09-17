@@ -47,8 +47,9 @@ spec:
           startupProbe:
             exec:
               command:
-                - curl
-                - http://codegen-tgi:8080
+                - python 
+                - -c 
+                - 'import requests; req = requests.get("http://codegen-tgi:8080"); print(req)'
             initialDelaySeconds: 5
             periodSeconds: 5
             failureThreshold: 120
