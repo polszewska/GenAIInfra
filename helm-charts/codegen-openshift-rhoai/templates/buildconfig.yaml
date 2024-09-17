@@ -15,7 +15,7 @@ spec:
   resources: {}
   runPolicy: SerialLatestOnly
   source:
-    contextDir: CodeGen/docker
+    contextDir: CodeGen
     git:
       ref: {{ .Values.codegen.image.gitRef }}
       uri: https://github.com/opea-project/GenAIExamples.git

@@ -31,7 +31,7 @@ spec:
           - |
             cp /usr/lib/ssl/cert.pem /tmp/bundle.crt && \
             cat /rhoai-ca/tls.crt  | tee -a '/tmp/bundle.crt' && \
-            python llm.py
+            bash ./entrypoint.sh
           env:
             - name: TGI_LLM_ENDPOINT
               value: "https://{{ .Values.servingRuntime.name }}-{{ .Values.servingRuntime.namespace }}.apps.{{ .Values.global.clusterDomain }}"
