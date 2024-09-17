@@ -5,7 +5,7 @@ dependencies:
   - name: llm-uservice
     version: 1.0
     repository: "file://llm-uservice"
-  - name: codegen-react-ui
+  - name: react-ui
     version: 0.1.0
     repository: "file://react-ui"
 type: application

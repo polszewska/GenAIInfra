@@ -1,5 +1,5 @@
 apiVersion: v2
-name: codegen-react-ui
+name: react-ui
 description: A Helm chart deploying OPEA CodeGen React UI
 
 # A chart can be either an 'application' or a 'library' chart.

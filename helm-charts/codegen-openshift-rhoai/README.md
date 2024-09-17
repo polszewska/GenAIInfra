@@ -89,7 +89,7 @@ sed -i "s/insert-your-namespace-here/${NAMESPACE}/g" codegen-openshift-rhoai/llm
 helm dependency update codegen-openshift-rhoai
 
 # To run on Xeon
-helm install codegen codegen-openshift-rhoai --set codegen.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/codegen --set llm-uservice.llmUservice.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/llm-tgi --set codegen-react-ui.reactUi.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/react-ui --set global.clusterDomain=${CLUSTERDOMAIN} --set global.huggingfacehubApiToken=${HFTOKEN} --set llm-uservice.servingRuntime.name=${MODELNAME} --set llm-uservice.servingRuntime.namespace=${PROJECT}
+helm install codegen codegen-openshift-rhoai --set codegen.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/codegen --set llm-uservice.llmUservice.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/llm-tgi --set react-ui.reactUi.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/react-ui --set global.clusterDomain=${CLUSTERDOMAIN} --set global.huggingfacehubApiToken=${HFTOKEN} --set llm-uservice.servingRuntime.name=${MODELNAME} --set llm-uservice.servingRuntime.namespace=${PROJECT}
 ``` 
 
 ## Verify
