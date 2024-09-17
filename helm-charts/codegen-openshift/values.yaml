@@ -6,4 +6,18 @@ codegen:
   image:
     repository: "insert-your-image-here"
     tag: "latest"
+    gitUri: "https://github.com/opea-project/GenAIExamples.git"
     gitRef: main
+    contextDir: CodeGen
+    type: Docker
+    dockerfilePath: Dockerfile
+    pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+port: 7778
+
+service:
+  type: ClusterIP
+  port: 7778
+

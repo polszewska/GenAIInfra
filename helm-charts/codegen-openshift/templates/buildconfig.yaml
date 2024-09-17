@@ -1,7 +1,7 @@
 kind: BuildConfig
 apiVersion: build.openshift.io/v1
 metadata:
-  name: codegen-megaservice-server
+  name: {{ include "codegen.fullname" . }}
   namespace: {{ .Release.Namespace }}
 spec:
   output:
@@ -15,14 +15,14 @@ spec:
   resources: {}
   runPolicy: SerialLatestOnly
   source:
-    contextDir: CodeGen
+    contextDir: {{ .Values.codegen.image.contextDir }}
     git:
       ref: {{ .Values.codegen.image.gitRef }}
-      uri: https://github.com/opea-project/GenAIExamples.git
+      uri: {{ .Values.codegen.image.gitUri }}
     type: Git
   strategy:
-    type: Docker
+    type: {{ .Values.codegen.image.type }}
     dockerStrategy:
-      dockerfilePath: Dockerfile
+      dockerfilePath: {{ .Values.codegen.image.dockerfilePath }}
   triggers:
   - type: ConfigChange
