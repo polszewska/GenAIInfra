@@ -4,7 +4,7 @@ Helm chart for deploying Web Retriever microservice.
 
 Web retriever depends on tei, you should set TEI_EMBEDDING_ENDPOINT endpoints before start.
 
-## (Option1): Installing the chart separately:
+## (Option1): Installing the chart separately
 
 First, you need to install the tei chart, please refer to the [tei](../tei) chart for more information.
 
@@ -21,7 +21,7 @@ export GOOGLE_CSE_ID="yourownid"
 helm install web-retriever . --set TEI_EMBEDDING_ENDPOINT=${TEI_EMBEDDING_ENDPOINT} --set GOOGLE_API_KEY=${GOOGLE_API_KEY} --set GOOGLE_CSE_ID=${GOOGLE_CSE_ID}
 ```
 
-## (Option2): Installing the chart with dependencies automatically:
+## (Option2): Installing the chart with dependencies automatically
 
 ```console
 cd GenAIInfra/helm-charts/common/web-retriever
@@ -49,10 +49,10 @@ curl http://localhost:7077/v1/web_retrieval \
 
 ## Values
 
-| Key                    | Type   | Default                              | Description |
-| ---------------------- | ------ | ------------------------------------ | ----------- |
-| image.repository       | string | `"opea/web-retriever-chroma:latest"` |             |
-| service.port           | string | `"7077"`                             |             |
-| TEI_EMBEDDING_ENDPOINT | string | `""`                                 |             |
-| GOOGLE_API_KEY         | string | `""`                                 |             |
-| GOOGLE_CSE_ID          | string | `""`                                 |             |
+| Key                    | Type   | Default                       | Description |
+| ---------------------- | ------ | ----------------------------- | ----------- |
+| image.repository       | string | `"opea/web-retriever-chroma"` |             |
+| service.port           | string | `"7077"`                      |             |
+| TEI_EMBEDDING_ENDPOINT | string | `""`                          |             |
+| GOOGLE_API_KEY         | string | `""`                          |             |
+| GOOGLE_CSE_ID          | string | `""`                          |             |

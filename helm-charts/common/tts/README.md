@@ -4,7 +4,7 @@ Helm chart for deploying tts microservice.
 
 tts depends on speecht5, you should set TTS_ENDPOINT endpoints before start.
 
-## (Option1): Installing the chart separately:
+## (Option1): Installing the chart separately
 
 First, you need to install the speecht5 chart, please refer to the [speecht5](../speecht5) chart for more information.
 
@@ -19,7 +19,7 @@ helm dependency update
 helm install tts . --set TTS_ENDPOINT=${TTS_ENDPOINT}
 ```
 
-## (Option2): Installing the chart with dependencies automatically:
+## (Option2): Installing the chart with dependencies automatically
 
 ```console
 cd GenAIInfra/helm-charts/common/tts
@@ -44,8 +44,8 @@ curl http://localhost:9088/v1/audio/speech \
 
 ## Values
 
-| Key              | Type   | Default             | Description |
-| ---------------- | ------ | ------------------- | ----------- |
-| image.repository | string | `"opea/tts:latest"` |             |
-| service.port     | string | `"9088"`            |             |
-| TTS_ENDPOINT     | string | `""`                |             |
+| Key              | Type   | Default      | Description |
+| ---------------- | ------ | ------------ | ----------- |
+| image.repository | string | `"opea/tts"` |             |
+| service.port     | string | `"9088"`     |             |
+| TTS_ENDPOINT     | string | `""`         |             |

@@ -1,0 +1,69 @@
+---
+# Source: tgi/templates/horizontal-pod-autoscaler.yaml
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tgi
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: tgi
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+  - type: Object
+    object:
+      metric:
+        # TGI time metrics are in seconds
+        name: tgi_request_latency
+      describedObject:
+        apiVersion: v1
+        # get metric for named object of given type (in same namespace)
+        kind: Service
+        name: tgi
+      target:
+        # tgi_request_latency is average for all the TGI pods. To avoid replica fluctuations when
+        # TGI startup + request processing takes longer than HPA evaluation period, this uses
+        # "Value" (replicas = metric.value / target.value), instead of "averageValue" type:
+        #  https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#algorithm-details
+        type: Value
+        value: 4
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 180
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 90
+    scaleUp:
+      selectPolicy: Max
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 90
+---
+# Source: tgi/templates/servicemonitor.yaml
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+#
+# Dashboard for the exposed TGI metrics:
+# - https://grafana.com/grafana/dashboards/19831-text-generation-inference-dashboard/
+# Metric descriptions:
+# - https://github.com/huggingface/text-generation-inference/discussions/1127#discussioncomment-7240527
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: tgi
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tgi
+      app.kubernetes.io/instance: tgi
+  endpoints:
+  - interval: 4s
+    port: tgi
+    scheme: http

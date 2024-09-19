@@ -1,0 +1,32 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+name: GenAIInfra GMC CD workflow on manual event
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        default: "latest"
+        description: "Tag to apply to images"
+        required: true
+        type: string
+      build:
+        default: true
+        description: 'Whether to build test required images for GMC'
+        required: false
+        type: boolean
+      test_gmc:
+        default: true
+        description: 'Whether to test GMC in KIND on Xeon'
+        required: false
+        type: boolean
+
+permissions: read-all
+jobs:
+  gmc-release:
+    uses: ./.github/workflows/_infra-workflow.yaml
+    with:
+      tag: ${{ inputs.tag }}
+      build: ${{ fromJSON(inputs.build) }}
+      test_gmc: ${{ fromJSON(inputs.test_gmc) }}
+    secrets: inherit

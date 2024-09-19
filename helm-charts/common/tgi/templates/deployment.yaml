@@ -8,7 +8,10 @@ metadata:
   labels:
     {{- include "tgi.labels" . | nindent 4 }}
 spec:
+  {{- if ne (int .Values.replicaCount) 1 }}
+  # remove if replica count should not be reset on pod update with HPA
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "tgi.selectorLabels" . | nindent 6 }}
@@ -45,13 +48,17 @@ spec:
             {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if .Values.extraArgs }}
+          {{- if .Values.extraCmdArgs }}
           args:
-            {{- toYaml .Values.extraArgs | nindent 12}}
+            {{- range .Values.extraCmdArgs }}
+            - {{ . | quote }}
+            {{- end }}
           {{- end }}
           volumeMounts:
             - mountPath: /data
               name: model-volume
+            - mountPath: /dev/shm
+              name: shm
             - mountPath: /tmp
               name: tmp
           ports:
@@ -74,13 +81,20 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
         - name: model-volume
-          {{- if .Values.global.modelUseHostPath }}
+          {{- if .Values.global.modelUsePVC }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.modelUsePVC }}
+          {{- else if .Values.global.modelUseHostPath }}
           hostPath:
             path: {{ .Values.global.modelUseHostPath }}
             type: Directory
           {{- else }}
           emptyDir: {}
           {{- end }}
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.shmSize }}
         - name: tmp
           emptyDir: {}
       {{- with .Values.nodeSelector }}
@@ -94,4 +108,17 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if not .Values.accelDevice }}
+      # extra time to finish processing buffered requests on CPU before pod is forcibly terminated
+      terminationGracePeriodSeconds: 120
+      {{- end }}
+      {{- if .Values.evenly_distributed }}
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              {{- include "tgi.selectorLabels" . | nindent 14 }}
       {{- end }}

@@ -8,10 +8,10 @@
 replicaCount: 1
 
 image:
-  repository: opea/chatqna:latest
+  repository: opea/chatqna
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  # tag: "1.0"
+  tag: "latest"
 
 port: 8888
 service:
@@ -29,18 +29,43 @@ securityContext:
   seccompProfile:
     type: RuntimeDefault
 
-# To override values in subchart tgi
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# This is just to avoid Helm errors when HPA is NOT used
+# (use hpa-values.yaml files to actually enable HPA).
+horizontalPodAutoscaler:
+  enabled: false
+
+# Override values in specific subcharts
 tgi:
   LLM_MODEL_ID: Intel/neural-chat-7b-v3-3
-  # LLM_MODEL_ID: /data/OpenCodeInterpreter-DS-6.7B
+
+# disable guardrails-usvc by default
+# See guardrails-values.yaml for guardrail related options
+guardrails-usvc:
+  enabled: false
+
+# If you would like to switch to traditional UI image
+# Uncomment the following lines
+# chatqna-ui:
+#   image:
+#     repository: "opea/chatqna-ui"
+#     tag: "latest"
+#   containerPort: "5173"
 
 global:
-  http_proxy:
-  https_proxy:
-  no_proxy:
+  http_proxy: ""
+  https_proxy: ""
+  no_proxy: ""
   HUGGINGFACEHUB_API_TOKEN: "insert-your-huggingface-token-here"
-  LANGCHAIN_TRACING_V2: false
-  LANGCHAIN_API_KEY: "insert-your-langchain-key-here"
-  # set modelUseHostPath to host directory if you want to use hostPath volume for model storage
-  # comment out modeluseHostPath if you want to download the model from huggingface
-  modelUseHostPath: /mnt/opea-models
+  # set modelUseHostPath or modelUsePVC to use model cache.
+  modelUseHostPath: ""
+  # modelUseHostPath: /mnt/opea-models
+  # modelUsePVC: model-volume
+
+  # Prometheus Helm installation info for subchart serviceMonitors
+  prometheusRelease: prometheus-stack

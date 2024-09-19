@@ -11,10 +11,10 @@ TTS_MODEL_PATH: "microsoft/speecht5_tts"
 #VOCODE_MODEL: "microsoft/speecht5_hifigan"
 
 image:
-  repository: opea/speecht5:latest
+  repository: opea/speecht5
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  # tag: "1.0"
+  tag: "latest"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -84,4 +84,13 @@ global:
   http_proxy: ""
   https_proxy: ""
   no_proxy: ""
-  modelUseHostPath: /mnt/opea-models
+
+  # Choose where to save your downloaded models
+  # Set modelUseHostPath for local directory, this is good for one node test. Example:
+  # modelUseHostPath: /mnt/opea-models
+  # Set modelUsePVC for PersistentVolumeClaim(PVC), which is suitable for multinode deployment. Example:
+  # modelUsePVC: model-volume
+  # You can only set one of the following var, the behavior is not defined is both are set.
+  # By default, both var are set to empty, the model will be downloaded and saved to a tmp volume.
+  modelUseHostPath: ""
+  modelUsePVC: ""

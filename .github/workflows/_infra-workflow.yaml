@@ -1,0 +1,43 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+name: GenAIInfra GMC Jobs
+permissions: read-all
+on:
+  workflow_call:
+    inputs:
+      tag:
+        default: "latest"
+        required: false
+        type: string
+      build:
+        default: true
+        required: false
+        type: boolean
+      test_gmc:
+        default: true
+        required: false
+        type: boolean
+
+jobs:
+####################################################################################################
+# Image Build
+####################################################################################################
+  image-build:
+    if: ${{ fromJSON(inputs.build) }}
+    uses: ./.github/workflows/_gmc-image-build.yaml
+    with:
+      image_tag: ${{ inputs.tag }}
+      runner_label: 'docker-build-xeon'
+
+####################################################################################################
+# GMC Test
+####################################################################################################
+  test-gmc:
+    needs: [image-build]
+    if: ${{ fromJSON(inputs.test_gmc) }}
+    uses: ./.github/workflows/_gmc-e2e.yaml
+    with:
+      repo: ${{ needs.image-build.outputs.image_repo }}
+      tag: ${{ needs.image-build.outputs.image_tag }}
+    secrets: inherit

@@ -12,9 +12,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -115,7 +117,12 @@ func TestSimpleModelChainer(t *testing.T) {
 		return
 	}
 	var response map[string]interface{}
-	err = json.Unmarshal(res, &response)
+	responseBytes, rerr := io.ReadAll(res)
+	if rerr != nil {
+		t.Fatalf("Error while reading the response body: %v", rerr)
+		return
+	}
+	err = json.Unmarshal(responseBytes, &response)
 	if err != nil {
 		return
 	}
@@ -216,7 +223,12 @@ func TestSimpleServiceEnsemble(t *testing.T) {
 		return
 	}
 	var response map[string]interface{}
-	err = json.Unmarshal(res, &response)
+	responseBytes, rerr := io.ReadAll(res)
+	if rerr != nil {
+		t.Fatalf("Error while reading the response body")
+		return
+	}
+	err = json.Unmarshal(responseBytes, &response)
 	if err != nil {
 		return
 	}
@@ -451,7 +463,12 @@ func TestMCWithCondition(t *testing.T) {
 		return
 	}
 	var response map[string]interface{}
-	err = json.Unmarshal(res, &response)
+	responseBytes, rerr := io.ReadAll(res)
+	if rerr != nil {
+		t.Fatalf("Error while reading the response body")
+		return
+	}
+	err = json.Unmarshal(responseBytes, &response)
 	if err != nil {
 		return
 	}
@@ -535,7 +552,12 @@ func TestCallServiceWhenNoneHeadersToPropagateIsEmpty(t *testing.T) {
 		return
 	}
 	var response map[string]interface{}
-	err = json.Unmarshal(res, &response)
+	responseBytes, rerr := io.ReadAll(res)
+	if rerr != nil {
+		t.Fatalf("Error while reading the response body")
+		return
+	}
+	err = json.Unmarshal(responseBytes, &response)
 	if err != nil {
 		return
 	}
@@ -819,5 +841,170 @@ func TestMcGraphHandler_Timeout(t *testing.T) {
 	expectedErrorMessage := "Failed to process request"
 	if !strings.Contains(string(body), expectedErrorMessage) {
 		t.Errorf("expected error message '%s'; got '%s'", expectedErrorMessage, string(body))
+	}
+}
+
+func TestMcDataHandler(t *testing.T) {
+	// Start a local HTTP server
+	service1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		_, err := io.ReadAll(req.Body)
+		if err != nil {
+			return
+		}
+		response := map[string]interface{}{"predictions": "1"}
+		responseBytes, _ := json.Marshal(response)
+		_, err = rw.Write(responseBytes)
+		if err != nil {
+			return
+		}
+	}))
+	service1Url, err := apis.ParseURL(service1.URL)
+	if err != nil {
+		t.Fatalf("Failed to parse model url")
+	}
+	defer service1.Close()
+
+	// Create a buffer to store the multipart form data
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+
+	// Add form fields
+	err = writer.WriteField("key", "value")
+	if err != nil {
+		t.Fatalf("failed to write form field: %v", err)
+	}
+
+	// Add a file field
+	part, err := writer.CreateFormFile("file", "filename.txt")
+	if err != nil {
+		t.Fatalf("failed to create form file: %v", err)
+	}
+	_, err = part.Write([]byte("file content"))
+	if err != nil {
+		t.Fatalf("failed to write to form file: %v", err)
+	}
+
+	// Close the writer to finalize the multipart form
+	err = writer.Close()
+	if err != nil {
+		t.Fatalf("failed to close writer: %v", err)
+	}
+
+	// Create a new HTTP request with the multipart form data
+	req := httptest.NewRequest(http.MethodPost, "/dataprep", &buf)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	// Create a ResponseRecorder to capture the response
+	rr := httptest.NewRecorder()
+
+	// Mock the mcGraph data
+	mcGraph = &mcv1alpha3.GMConnector{
+		Spec: mcv1alpha3.GMConnectorSpec{
+			Nodes: map[string]mcv1alpha3.Router{
+				"root": {
+					Steps: []mcv1alpha3.Step{
+						{
+							StepName:   "DataPrep",
+							ServiceURL: service1Url.String(),
+							Executor: mcv1alpha3.Executor{
+								InternalService: mcv1alpha3.GMCTarget{
+									NameSpace:   "default",
+									ServiceName: "example-service",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Call the mcDataHandler function
+	mcDataHandler(rr, req)
+
+	// Check the response status code
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
+
+	// Check the response body if needed
+	expected := "{\"predictions\":\"1\"}"
+	if strings.TrimSpace(rr.Body.String()) != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expected)
+	}
+}
+
+func TestMergeRequests(t *testing.T) {
+	// Define the test cases
+	tests := []struct {
+		name        string
+		respReq     []byte
+		initReqData map[string]interface{}
+		expected    []byte
+		expectErr   bool
+	}{
+		{
+			name:    "Merge with Parameters",
+			respReq: []byte(`{"key1":"value1","key2":"value2"}`),
+			initReqData: map[string]interface{}{
+				"parameters": map[string]interface{}{
+					"key2": "newValue2",
+					"key3": "value3",
+				},
+			},
+			expected:  []byte(`{"key1":"value1","key2":"newValue2","key3":"value3"}`),
+			expectErr: false,
+		},
+		{
+			name:        "No Parameters in initReqData",
+			respReq:     []byte(`{"key1":"value1"}`),
+			initReqData: map[string]interface{}{},
+			expected:    []byte(`{"key1":"value1"}`),
+			expectErr:   false,
+		},
+		{
+			name: "Invalid JSON in respReq",
+			// Invalid JSON
+			respReq: []byte(`{"key1":value1}`),
+			initReqData: map[string]interface{}{
+				"parameters": map[string]interface{}{
+					"key2": "value2",
+				},
+			},
+			expected:  nil,
+			expectErr: true,
+		},
+	}
+
+	// Run the test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := mergeRequests(tt.respReq, tt.initReqData)
+
+			if tt.expectErr {
+				if result != nil {
+					t.Errorf("Expected error, but got result: %s", string(result))
+				}
+				return
+			}
+
+			// Unmarshal the JSON result to compare
+			var resultMap map[string]interface{}
+			if err := json.Unmarshal(result, &resultMap); err != nil {
+				t.Fatalf("Failed to unmarshal result: %v", err)
+			}
+
+			var expectedMap map[string]interface{}
+			if err := json.Unmarshal(tt.expected, &expectedMap); err != nil {
+				t.Fatalf("Failed to unmarshal expected result: %v", err)
+			}
+
+			// Compare the actual result with the expected result
+			if !reflect.DeepEqual(resultMap, expectedMap) {
+				t.Errorf("Test %s failed: expected %v, got %v", tt.name, expectedMap, resultMap)
+			}
+		})
 	}
 }

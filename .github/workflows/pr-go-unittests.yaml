@@ -1,0 +1,96 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+name: Golang Lint and Unit Tests
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, ready_for_review, synchronize] # added `ready_for_review` since draft is skipped
+    paths:
+      - microservices-connector/**
+      - kubernetes-addons/memory-bandwidth-exporter/**
+      - "!microservices-connector/helm/**"
+      - "!**.md"
+      - "!**.txt"
+      - "!**.png"
+  workflow_dispatch:
+
+# If there is a new commit, the previous jobs will be canceled
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GMC_DIR: "microservices-connector"
+  MBE_DIR: "kubernetes-addons/memory-bandwidth-exporter"
+
+jobs:
+  job1:
+    name: Get-test-matrix
+    runs-on: ubuntu-latest
+    outputs:
+      run_matrix: ${{ steps.get-test-matrix.outputs.run_matrix }}
+    steps:
+      - name: Checkout out Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get test matrix
+        id: get-test-matrix
+        run: |
+          set -xe
+          base_commit=${{ github.event.pull_request.base.sha }}
+          merged_commit=${{ github.event.pull_request.head.sha }}
+          run_matrix="["
+          if git diff --name-only ${base_commit} ${merged_commit} | grep -q "^${GMC_DIR}/"; then
+            run_matrix="${run_matrix}\"${GMC_DIR}\","
+          fi
+          if git diff --name-only ${base_commit} ${merged_commit} | grep -q "^${MBE_DIR}/"; then
+            run_matrix="${run_matrix}\"${MBE_DIR}\","
+          fi
+          run_matrix=${run_matrix%,}"]"
+          echo "run_matrix=${run_matrix}"
+          echo "run_matrix=${run_matrix}" >> $GITHUB_OUTPUT
+
+  go-unittests:
+    needs: [job1]
+    runs-on: ubuntu-latest
+    if: always() && ${{ needs.job1.outputs.run_matrix.length }} > 0
+    strategy:
+      matrix:
+        gopath: ${{ fromJSON(needs.job1.outputs.run_matrix) }}
+    permissions:
+      contents: write
+      actions: write
+      packages: write
+    steps:
+      - name: Set up Go 1.21
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+        id: go
+
+      - name: Checkout out Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run golang lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          args: --timeout=10m
+          version: v1.55.2
+          working-directory: ${{ matrix.gopath }}
+
+      - name: Run golangunit test
+        run: |
+          cd ${{ matrix.gopath }}
+          make test
+
+      - name: Run tests and generate coverage
+        run: |
+          cd ${{ matrix.gopath }}
+          go test -coverprofile=coverage.out $(go list ./... | grep -v /e2e)
+          ${{ github.workspace }}/.github/workflows/scripts/go-coverage.sh

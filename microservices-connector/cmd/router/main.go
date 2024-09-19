@@ -11,13 +11,14 @@
 package main
 
 import (
-	"bufio"
+	// "bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 
@@ -37,17 +38,32 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
+const (
+	BufferSize    = 1024
+	MaxGoroutines = 1024
+	ServiceURL    = "serviceUrl"
+	ServiceNode   = "node"
+	DataPrep      = "DataPrep"
+	Parameters    = "parameters"
+)
+
 var (
 	jsonGraph       = flag.String("graph-json", "", "serialized json graph def")
 	log             = logf.Log.WithName("GMCGraphRouter")
 	mcGraph         *mcv1alpha3.GMConnector
 	defaultNodeName = "root"
-)
-
-const (
-	ChunkSize   = 1024
-	ServiceURL  = "serviceUrl"
-	ServiceNode = "node"
+	semaphore       = make(chan struct{}, MaxGoroutines)
+	transport       = &http.Transport{
+		MaxIdleConns:          1000,
+		MaxIdleConnsPerHost:   100,
+		IdleConnTimeout:       2 * time.Minute,
+		TLSHandshakeTimeout:   time.Minute,
+		ExpectContinueTimeout: 30 * time.Second,
+	}
+	callClient = &http.Client{
+		Transport: transport,
+		Timeout:   30 * time.Second,
+	}
 )
 
 type EnsembleStepOutput struct {
@@ -58,6 +74,19 @@ type EnsembleStepOutput struct {
 type GMCGraphRoutingError struct {
 	ErrorMessage string `json:"error"`
 	Cause        string `json:"cause"`
+}
+
+type ReadCloser struct {
+	*bytes.Reader
+}
+
+func (ReadCloser) Close() error {
+	// Typically, you would release resources here, but for bytes.Reader, there's nothing to do.
+	return nil
+}
+
+func NewReadCloser(b []byte) io.ReadCloser {
+	return ReadCloser{bytes.NewReader(b)}
 }
 
 func (e *GMCGraphRoutingError) Error() string {
@@ -124,7 +153,15 @@ func prepareErrorResponse(err error, errorMessage string) []byte {
 	return errorResponseBytes
 }
 
-func callService(step *mcv1alpha3.Step, serviceUrl string, input []byte, headers http.Header) ([]byte, int, error) {
+func callService(
+	step *mcv1alpha3.Step,
+	serviceUrl string,
+	input []byte,
+	headers http.Header,
+) (io.ReadCloser, int, error) {
+	semaphore <- struct{}{}
+	defer func() { <-semaphore }()
+
 	defer timeTrack(time.Now(), "step", serviceUrl)
 	log.Info("Entering callService", "url", serviceUrl)
 
@@ -138,6 +175,7 @@ func callService(step *mcv1alpha3.Step, serviceUrl string, input []byte, headers
 			return nil, 400, err
 		}
 	}
+
 	req, err := http.NewRequest("POST", serviceUrl, bytes.NewBuffer(input))
 	if err != nil {
 		log.Error(err, "An error occurred while preparing request object with serviceUrl.", "serviceUrl", serviceUrl)
@@ -147,28 +185,14 @@ func callService(step *mcv1alpha3.Step, serviceUrl string, input []byte, headers
 	if val := req.Header.Get("Content-Type"); val == "" {
 		req.Header.Add("Content-Type", "application/json")
 	}
-	resp, err := http.DefaultClient.Do(req)
 
+	resp, err := callClient.Do(req)
 	if err != nil {
 		log.Error(err, "An error has occurred while calling service", "service", serviceUrl)
 		return nil, 500, err
 	}
 
-	defer func() {
-		if resp.Body != nil {
-			err := resp.Body.Close()
-			if err != nil {
-				log.Error(err, "An error has occurred while closing the response body")
-			}
-		}
-	}()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Error(err, "Error while reading the response")
-	}
-
-	return body, resp.StatusCode, err
+	return resp.Body, resp.StatusCode, nil
 }
 
 // Use step service name to create a K8s service if serviceURL is empty
@@ -187,7 +211,7 @@ func executeStep(
 	initInput []byte,
 	input []byte,
 	headers http.Header,
-) ([]byte, int, error) {
+) (io.ReadCloser, int, error) {
 	if step.NodeName != "" {
 		// when nodeName is specified make a recursive call for routing to next step
 		return routeStep(step.NodeName, graph, initInput, input, headers)
@@ -196,22 +220,48 @@ func executeStep(
 	return callService(step, serviceURL, input, headers)
 }
 
+func mergeRequests(respReq []byte, initReqData map[string]interface{}) []byte {
+	var respReqData map[string]interface{}
+
+	if _, exists := initReqData[Parameters]; exists {
+		if err := json.Unmarshal(respReq, &respReqData); err != nil {
+			log.Error(err, "Error unmarshaling respReqData:")
+			return nil
+		}
+		// Merge init request into respReq
+		for key, value := range initReqData[Parameters].(map[string]interface{}) {
+			/*if _, exists := respReqData[key]; !exists {
+				respReqData[key] = value
+			}*/
+			// overwrite the respReq by initial request
+			respReqData[key] = value
+		}
+		mergedBytes, err := json.Marshal(respReqData)
+		if err != nil {
+			log.Error(err, "Error marshaling merged data:")
+			return nil
+		}
+		return mergedBytes
+	}
+	return respReq
+}
+
 func handleSwitchNode(
 	route *mcv1alpha3.Step,
 	graph mcv1alpha3.GMConnector,
 	initInput []byte,
 	request []byte,
 	headers http.Header,
-) ([]byte, int, error) {
+) (io.ReadCloser, int, error) {
 	var statusCode int
-	var responseBytes []byte
+	var responseBody io.ReadCloser
 	var err error
 	stepType := ServiceURL
 	if route.NodeName != "" {
 		stepType = ServiceNode
 	}
 	log.Info("Starting execution of step", "Node Name", route.NodeName, "type", stepType, "stepName", route.StepName)
-	if responseBytes, statusCode, err = executeStep(route, graph, initInput, request, headers); err != nil {
+	if responseBody, statusCode, err = executeStep(route, graph, initInput, request, headers); err != nil {
 		return nil, 500, err
 	}
 
@@ -224,7 +274,7 @@ func handleSwitchNode(
 			statusCode,
 		)
 	}
-	return responseBytes, statusCode, nil
+	return responseBody, statusCode, nil
 }
 
 func handleSwitchPipeline(nodeName string,
@@ -232,11 +282,19 @@ func handleSwitchPipeline(nodeName string,
 	initInput []byte,
 	input []byte,
 	headers http.Header,
-) ([]byte, int, error) {
+) (io.ReadCloser, int, error) {
 	currentNode := graph.Spec.Nodes[nodeName]
 	var statusCode int
+	var responseBody io.ReadCloser
 	var responseBytes []byte
 	var err error
+
+	initReqData := make(map[string]interface{})
+	if err = json.Unmarshal(initInput, &initReqData); err != nil {
+		log.Error(err, "Error unmarshaling initReqData:")
+		return nil, 500, err
+	}
+
 	for index, route := range currentNode.Steps {
 		if route.InternalService.IsDownstreamService {
 			log.Info(
@@ -248,27 +306,41 @@ func handleSwitchPipeline(nodeName string,
 			)
 			continue
 		}
+
+		// make sure that the process goes to the correct step
+		if route.Condition != "" {
+			if !pickupRouteByCondition(initInput, route.Condition) {
+				continue
+			}
+		}
+
 		log.Info("Current Step Information", "Node Name", nodeName, "Step Index", index)
 		request := input
-		if route.Data == "$response" && index > 0 {
-			request = responseBytes
-		}
-		if route.Condition == "" {
-			responseBytes, statusCode, err = handleSwitchNode(&route, graph, initInput, request, headers)
+		if responseBody != nil {
+			responseBytes, err = io.ReadAll(responseBody)
 			if err != nil {
-				return responseBytes, statusCode, err
+				log.Error(err, "Error while reading the response body")
+				return nil, 500, err
 			}
-		} else {
-			if pickupRouteByCondition(initInput, route.Condition) {
-				responseBytes, statusCode, err = handleSwitchNode(&route, graph, initInput, request, headers)
-				if err != nil {
-					return responseBytes, statusCode, err
-				}
+			log.Info("Print Previous Response Bytes", "Previous Response Bytes",
+				responseBytes, "Previous Status Code", statusCode)
+			err = responseBody.Close()
+			if err != nil {
+				log.Error(err, "Error while trying to close the responseBody in handleSwitchPipeline")
 			}
 		}
-		log.Info("Print Response Bytes", "Response Bytes", responseBytes, "Status Code", statusCode)
+
+		log.Info("Print Original Request Bytes", "Request Bytes", request)
+		if route.Data == "$response" && index > 0 {
+			request = mergeRequests(responseBytes, initReqData)
+		}
+		log.Info("Print New Request Bytes", "Request Bytes", request)
+		responseBody, statusCode, err = handleSwitchNode(&route, graph, initInput, request, headers)
+		if err != nil {
+			return nil, statusCode, err
+		}
 	}
-	return responseBytes, statusCode, err
+	return responseBody, statusCode, err
 }
 
 func handleEnsemblePipeline(nodeName string,
@@ -276,7 +348,7 @@ func handleEnsemblePipeline(nodeName string,
 	initInput []byte,
 	input []byte,
 	headers http.Header,
-) ([]byte, int, error) {
+) (io.ReadCloser, int, error) {
 	currentNode := graph.Spec.Nodes[nodeName]
 	ensembleRes := make([]chan EnsembleStepOutput, len(currentNode.Steps))
 	errChan := make(chan error)
@@ -290,8 +362,12 @@ func handleEnsemblePipeline(nodeName string,
 		resultChan := make(chan EnsembleStepOutput)
 		ensembleRes[i] = resultChan
 		go func() {
-			output, statusCode, err := executeStep(step, graph, initInput, input, headers)
+			responseBody, statusCode, err := executeStep(step, graph, initInput, input, headers)
 			if err == nil {
+				output, rerr := io.ReadAll(responseBody)
+				if rerr != nil {
+					log.Error(rerr, "Error while reading the response body")
+				}
 				var res map[string]interface{}
 				if err = json.Unmarshal(output, &res); err == nil {
 					resultChan <- EnsembleStepOutput{
@@ -300,6 +376,10 @@ func handleEnsemblePipeline(nodeName string,
 					}
 					return
 				}
+			}
+			rerr := responseBody.Close()
+			if rerr != nil {
+				log.Error(rerr, "Error while trying to close the responseBody in handleEnsemblePipeline")
 			}
 			errChan <- err
 		}()
@@ -323,7 +403,8 @@ func handleEnsemblePipeline(nodeName string,
 					ensembleStepOutput.StepStatusCode,
 				)
 				stepResponse, _ := json.Marshal(ensembleStepOutput.StepResponse)
-				return stepResponse, ensembleStepOutput.StepStatusCode, nil
+				stepIOReader := NewReadCloser(stepResponse)
+				return stepIOReader, ensembleStepOutput.StepStatusCode, nil
 			} else {
 				response[key] = ensembleStepOutput.StepResponse
 			}
@@ -333,7 +414,8 @@ func handleEnsemblePipeline(nodeName string,
 	}
 	// return json.Marshal(response)
 	combinedResponse, _ := json.Marshal(response) // TODO check if you need err handling for Marshalling
-	return combinedResponse, 200, nil
+	combinedIOReader := NewReadCloser(combinedResponse)
+	return combinedIOReader, 200, nil
 }
 
 func handleSequencePipeline(nodeName string,
@@ -341,11 +423,18 @@ func handleSequencePipeline(nodeName string,
 	initInput []byte,
 	input []byte,
 	headers http.Header,
-) ([]byte, int, error) {
+) (io.ReadCloser, int, error) {
 	currentNode := graph.Spec.Nodes[nodeName]
 	var statusCode int
+	var responseBody io.ReadCloser
 	var responseBytes []byte
 	var err error
+
+	initReqData := make(map[string]interface{})
+	if err = json.Unmarshal(initInput, &initReqData); err != nil {
+		log.Error(err, "Error unmarshaling initReqData:")
+		return nil, 500, err
+	}
 	for i := range currentNode.Steps {
 		step := &currentNode.Steps[i]
 		stepType := ServiceURL
@@ -364,22 +453,37 @@ func handleSequencePipeline(nodeName string,
 		}
 		log.Info("Starting execution of step", "type", stepType, "stepName", step.StepName)
 		request := input
-		if step.Data == "$response" && i > 0 {
-			request = responseBytes
+		log.Info("Print Original Request Bytes", "Request Bytes", request)
+		if responseBody != nil {
+			responseBytes, err = io.ReadAll(responseBody)
+			if err != nil {
+				log.Error(err, "Error while reading the response body")
+				return nil, 500, err
+			}
+			log.Info("Print Previous Response Bytes", "Previous Response Bytes",
+				responseBytes, "Previous Status Code", statusCode)
+			err := responseBody.Close()
+			if err != nil {
+				log.Error(err, "Error while trying to close the responseBody in handleSequencePipeline")
+			}
 		}
+
+		if step.Data == "$response" && i > 0 {
+			request = mergeRequests(responseBytes, initReqData)
+		}
+		log.Info("Print New Request Bytes", "Request Bytes", request)
 		if step.Condition != "" {
 			if !gjson.ValidBytes(responseBytes) {
 				return nil, 500, fmt.Errorf("invalid response")
 			}
 			// if the condition does not match for the step in the sequence we stop and return the response
 			if !gjson.GetBytes(responseBytes, step.Condition).Exists() {
-				return responseBytes, 500, nil
+				return responseBody, 500, nil
 			}
 		}
-		if responseBytes, statusCode, err = executeStep(step, graph, initInput, request, headers); err != nil {
+		if responseBody, statusCode, err = executeStep(step, graph, initInput, request, headers); err != nil {
 			return nil, 500, err
 		}
-		log.Info("Print Response Bytes", "Response Bytes", responseBytes, "Status Code", statusCode)
 		/*
 		   Only if a step is a hard dependency, we will check for its success.
 		*/
@@ -393,18 +497,18 @@ func handleSequencePipeline(nodeName string,
 					statusCode,
 				)
 				// Stop the execution of sequence right away if step is a hard dependency and is unsuccessful
-				return responseBytes, statusCode, nil
+				return responseBody, statusCode, nil
 			}
 		}
 	}
-	return responseBytes, statusCode, nil
+	return responseBody, statusCode, nil
 }
 
 func routeStep(nodeName string,
 	graph mcv1alpha3.GMConnector,
 	initInput, input []byte,
 	headers http.Header,
-) ([]byte, int, error) {
+) (io.ReadCloser, int, error) {
 	defer timeTrack(time.Now(), "node", nodeName)
 	currentNode := graph.Spec.Nodes[nodeName]
 	log.Info("Current Node", "Node Name", nodeName)
@@ -432,9 +536,14 @@ func mcGraphHandler(w http.ResponseWriter, req *http.Request) {
 	go func() {
 		defer close(done)
 
-		inputBytes, _ := io.ReadAll(req.Body)
-		response, statusCode, err := routeStep(defaultNodeName, *mcGraph, inputBytes, inputBytes, req.Header)
+		inputBytes, err := io.ReadAll(req.Body)
+		if err != nil {
+			log.Error(err, "failed to read request body")
+			http.Error(w, "failed to read request body", http.StatusBadRequest)
+			return
+		}
 
+		responseBody, statusCode, err := routeStep(defaultNodeName, *mcGraph, inputBytes, inputBytes, req.Header)
 		if err != nil {
 			log.Error(err, "failed to process request")
 			w.Header().Set("Content-Type", "application/json")
@@ -444,25 +553,36 @@ func mcGraphHandler(w http.ResponseWriter, req *http.Request) {
 			}
 			return
 		}
-		if json.Valid(response) {
-			w.Header().Set("Content-Type", "application/json")
-		}
-		w.WriteHeader(statusCode)
-
-		writer := bufio.NewWriter(w)
 		defer func() {
-			if err := writer.Flush(); err != nil {
-				log.Error(err, "error flushing writer when processing response")
+			err := responseBody.Close()
+			if err != nil {
+				log.Error(err, "Error while trying to close the responseBody in mcGraphHandler")
 			}
 		}()
 
-		for start := 0; start < len(response); start += ChunkSize {
-			end := start + ChunkSize
-			if end > len(response) {
-				end = len(response)
+		w.Header().Set("Content-Type", "application/json")
+		buffer := make([]byte, BufferSize)
+		for {
+			n, err := responseBody.Read(buffer)
+			if err != nil && err != io.EOF {
+				log.Error(err, "failed to read from response body")
+				http.Error(w, "failed to read from response body", http.StatusInternalServerError)
+				return
 			}
-			if _, err := writer.Write(response[start:end]); err != nil {
-				log.Error(err, "failed to write mcGraphHandler response")
+			if n == 0 {
+				break
+			}
+
+			// Write the chunk to the ResponseWriter
+			if _, err := w.Write(buffer[:n]); err != nil {
+				log.Error(err, "failed to write to ResponseWriter")
+				return
+			}
+			// Flush the data to the client immediately
+			if flusher, ok := w.(http.Flusher); ok {
+				flusher.Flush()
+			} else {
+				log.Error(errors.New("unable to flush data"), "ResponseWriter does not support flushing")
 				return
 			}
 		}
@@ -470,11 +590,148 @@ func mcGraphHandler(w http.ResponseWriter, req *http.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error(errors.New("failed to process request"), "request timed out")
+		log.Error(errors.New("request timed out"), "failed to process request")
 		http.Error(w, "request timed out", http.StatusGatewayTimeout)
 	case <-done:
 		log.Info("mcGraphHandler is done")
 	}
+}
+
+func mcDataHandler(w http.ResponseWriter, r *http.Request) {
+	var isDataHandled bool
+	serviceName := r.Header.Get("SERVICE_NAME")
+	defaultNode := mcGraph.Spec.Nodes[defaultNodeName]
+	for i := range defaultNode.Steps {
+		step := &defaultNode.Steps[i]
+		if DataPrep == step.StepName {
+			if serviceName != "" && serviceName != step.InternalService.ServiceName {
+				continue
+			}
+			log.Info("Starting execution of step", "stepName", step.StepName)
+			serviceURL := getServiceURLByStepTarget(step, mcGraph.Namespace)
+			log.Info("ServiceURL is", "serviceURL", serviceURL)
+			// Parse the multipart form in the request
+			// err := r.ParseMultipartForm(64 << 20) // 64 MB is the default used by ParseMultipartForm
+
+			// Set no limit on multipart form size
+			err := r.ParseMultipartForm(0)
+			if err != nil {
+				http.Error(w, "Failed to parse multipart form", http.StatusBadRequest)
+				return
+			}
+			// Create a buffer to hold the new form data
+			var buf bytes.Buffer
+			writer := multipart.NewWriter(&buf)
+			// Copy all form fields from the original request to the new request
+			for key, values := range r.MultipartForm.Value {
+				for _, value := range values {
+					err := writer.WriteField(key, value)
+					if err != nil {
+						handleMultipartError(writer, err)
+						http.Error(w, "Failed to write form field", http.StatusInternalServerError)
+						return
+					}
+				}
+			}
+			// Copy all files from the original request to the new request
+			for key, fileHeaders := range r.MultipartForm.File {
+				for _, fileHeader := range fileHeaders {
+					file, err := fileHeader.Open()
+					if err != nil {
+						handleMultipartError(writer, err)
+						http.Error(w, "Failed to open file", http.StatusInternalServerError)
+						return
+					}
+					defer func() {
+						if err := file.Close(); err != nil {
+							log.Error(err, "error closing file")
+						}
+					}()
+					part, err := writer.CreateFormFile(key, fileHeader.Filename)
+					if err != nil {
+						handleMultipartError(writer, err)
+						http.Error(w, "Failed to create form file", http.StatusInternalServerError)
+						return
+					}
+					_, err = io.Copy(part, file)
+					if err != nil {
+						handleMultipartError(writer, err)
+						http.Error(w, "Failed to copy file", http.StatusInternalServerError)
+						return
+					}
+				}
+			}
+
+			err = writer.Close()
+			if err != nil {
+				http.Error(w, "Failed to close writer", http.StatusInternalServerError)
+				return
+			}
+
+			req, err := http.NewRequest(r.Method, serviceURL, &buf)
+			if err != nil {
+				http.Error(w, "Failed to create new request", http.StatusInternalServerError)
+				return
+			}
+			// Copy headers from the original request to the new request
+			for key, values := range r.Header {
+				for _, value := range values {
+					req.Header.Add(key, value)
+				}
+			}
+			req.Header.Set("Content-Type", writer.FormDataContentType())
+			client := &http.Client{}
+			resp, err := client.Do(req)
+			if err != nil {
+				http.Error(w, "Failed to send request to backend", http.StatusInternalServerError)
+				return
+			}
+			defer func() {
+				if err := resp.Body.Close(); err != nil {
+					log.Error(err, "error closing response body stream")
+				}
+			}()
+			// Copy the response headers from the backend service to the original client
+			for key, values := range resp.Header {
+				for _, value := range values {
+					w.Header().Add(key, value)
+				}
+			}
+			w.WriteHeader(resp.StatusCode)
+			// Copy the response body from the backend service to the original client
+			_, err = io.Copy(w, resp.Body)
+			if err != nil {
+				log.Error(err, "failed to copy response body")
+			}
+			isDataHandled = true
+		}
+	}
+
+	if !isDataHandled {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(404)
+		if _, err := w.Write([]byte("\n Message: None dataprep endpoint is available! \n")); err != nil {
+			log.Info("Message: ", "failed to write mcDataHandler response")
+		}
+	}
+}
+
+func handleMultipartError(writer *multipart.Writer, err error) {
+	// In case of an error, close the writer to clean up
+	werr := writer.Close()
+	if werr != nil {
+		log.Error(werr, "Error during close writer")
+		return
+	}
+	// Handle the error as needed, such as logging or returning an error response
+	log.Error(err, "Error during multipart creation")
+}
+
+func initializeRoutes() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", mcGraphHandler)
+	mux.HandleFunc("/dataprep", mcDataHandler)
+	return mux
 }
 
 func main() {
@@ -488,13 +745,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	http.HandleFunc("/", mcGraphHandler)
+	mcRouter := initializeRoutes()
 
 	server := &http.Server{
 		// specify the address and port
 		Addr: ":8080",
-		// specify your HTTP handler
-		Handler: http.HandlerFunc(mcGraphHandler),
+		// specify the HTTP routers
+		Handler: mcRouter,
 		// set the maximum duration for reading the entire request, including the body
 		ReadTimeout: time.Minute,
 		// set the maximum duration before timing out writes of the response

@@ -4,7 +4,7 @@ Helm chart for deploying embedding microservice.
 
 embedding-usvc depends on TEI, set TEI_EMBEDDING_ENDPOINT.
 
-## (Option1): Installing the chart separately:
+## (Option1): Installing the chart separately
 
 First, you need to install the tei chart, please refer to the [tei](../tei) chart for more information.
 
@@ -19,7 +19,7 @@ helm dependency update
 helm install embedding-usvc . --set TEI_EMBEDDING_ENDPOINT=${TEI_EMBEDDING_ENDPOINT}
 ```
 
-## (Option2): Installing the chart with dependencies automatically:
+## (Option2): Installing the chart with dependencies automatically
 
 ```console
 cd GenAIInfra/helm-charts/common/embedding-usvc
@@ -44,8 +44,8 @@ curl http://localhost:6000/v1/embeddings \
 
 ## Values
 
-| Key                    | Type   | Default                       | Description |
-| ---------------------- | ------ | ----------------------------- | ----------- |
-| image.repository       | string | `"opea/embedding-tei:latest"` |             |
-| service.port           | string | `"6000"`                      |             |
-| TEI_EMBEDDING_ENDPOINT | string | `""`                          |             |
+| Key                    | Type   | Default                | Description |
+| ---------------------- | ------ | ---------------------- | ----------- |
+| image.repository       | string | `"opea/embedding-tei"` |             |
+| service.port           | string | `"6000"`               |             |
+| TEI_EMBEDDING_ENDPOINT | string | `""`                   |             |

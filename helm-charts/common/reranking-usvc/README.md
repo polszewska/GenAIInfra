@@ -4,7 +4,7 @@ Helm chart for deploying reranking microservice.
 
 reranking-usvc depends on teirerank, set the TEI_RERANKING_ENDPOINT as teirerank endpoint.
 
-## (Option1): Installing the chart separately:
+## (Option1): Installing the chart separately
 
 First, you need to install the teirerank chart, please refer to the [teirerank](../teirerank) chart for more information.
 
@@ -19,7 +19,7 @@ helm dependency update
 helm install reranking-usvc . --set TEI_RERANKING_ENDPOINT=${TEI_RERANKING_ENDPOINT}
 ```
 
-## (Option2): Installing the chart with dependencies automatically:
+## (Option2): Installing the chart with dependencies automatically
 
 ```console
 cd GenAIInfra/helm-charts/common/reranking-usvc
@@ -44,8 +44,8 @@ curl http://localhost:8000/v1/reranking \
 
 ## Values
 
-| Key                    | Type   | Default                       | Description |
-| ---------------------- | ------ | ----------------------------- | ----------- |
-| image.repository       | string | `"opea/reranking-tgi:latest"` |             |
-| TEI_RERANKING_ENDPOINT | string | `""`                          |             |
-| service.port           | string | `"8000"`                      |             |
+| Key                    | Type   | Default                | Description |
+| ---------------------- | ------ | ---------------------- | ----------- |
+| image.repository       | string | `"opea/reranking-tgi"` |             |
+| TEI_RERANKING_ENDPOINT | string | `""`                   |             |
+| service.port           | string | `"8000"`               |             |

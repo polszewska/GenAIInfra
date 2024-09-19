@@ -9,10 +9,10 @@ replicaCount: 1
 LLM_SERVICE_HOST_IP: ""
 
 image:
-  repository: opea/codetrans:latest
+  repository: opea/codetrans
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  # tag: "1.0"
+  tag: "latest"
 
 port: 7777
 service:
@@ -30,24 +30,29 @@ securityContext:
   seccompProfile:
     type: RuntimeDefault
 
-# To override values in subchart llm-uservice
-llm-uservice:
-  image:
-    repository: opea/llm-tgi:latest
-  service:
-    port: 9000
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
 # To override values in subchart tgi
 tgi:
   LLM_MODEL_ID: HuggingFaceH4/mistral-7b-grok
-  # LLM_MODEL_ID: /data/OpenCodeInterpreter-DS-6.7B
+
+codetrans-ui:
+  image:
+    repository: opea/codetrans-ui
+    tag: "latest"
+  BACKEND_SERVICE_ENDPOINT: "/v1/codetrans"
+  containerPort: 5173
 
 global:
   http_proxy: ""
   https_proxy: ""
   no_proxy: ""
   HUGGINGFACEHUB_API_TOKEN: "insert-your-huggingface-token-here"
-  LANGCHAIN_TRACING_V2: false
-  LANGCHAIN_API_KEY: "insert-your-langchain-key-here"
-  # set modelUseHostPath to host directory if you want to use hostPath volume for model storage
-  # comment out modeluseHostPath if you want to download the model from huggingface
-  modelUseHostPath: /mnt/opea-models
+  # set modelUseHostPath or modelUsePVC to use model cache.
+  modelUseHostPath: ""
+  # modelUseHostPath: /mnt/opea-models
+  # modelUsePVC: model-volume

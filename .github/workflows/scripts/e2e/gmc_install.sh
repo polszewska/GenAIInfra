@@ -32,16 +32,7 @@ function install_gmc() {
     kubectl get pods -n $SYSTEM_NAMESPACE
 }
 
-function copy_manifests() {
-    # Copy manifest into gmc
-    mkdir -p $(pwd)/config/manifests
-    cp $(dirname $(pwd))/manifests/common/*.yaml -p $(pwd)/config/manifests/
-}
-
 function init_gmc() {
-    # copy manifests
-    copy_manifests
-
     # replace tag with for the gmc-router and gmc-manager image
     sed -i "s|opea/\(.*\):latest|opea/\1:$VERSION|g" $(pwd)/config/gmcrouter/gmc-router.yaml
     sed -i "s|opea/\(.*\):latest|opea/\1:$VERSION|g" $(pwd)/config/manager/gmc-manager.yaml
@@ -56,6 +47,12 @@ function init_gmc() {
     sed -i "s|namespace: system|namespace: $SYSTEM_NAMESPACE|g"  $(pwd)/config/rbac/gmc-manager-rbac.yaml
     sed -i "s|name: system|name: $SYSTEM_NAMESPACE|g" $(pwd)/config/rbac/gmc-manager-rbac.yaml
 
+    # if SET_VERSION=true then replace latest with VERSION
+    if [ -n "$SET_VERSION" ]; then
+        # replace the repository "image: opea/*:latest" with "image: ${IMAGE_REPO}opea/"
+        find . -name '*.yaml' -type f -exec sed -i "s#image: opea/\(.*\):latest#image: opea/\1:$VERSION#g" {} \;
+        find . -name '*.yaml' -type f -exec sed -i "s#image: \"opea/\(.*\):latest#image: \"opea/\1:$VERSION#g" {} \;
+    fi
     # replace the mount dir "path: /mnt/model" with "path: $CHART_MOUNT"
     # find . -name '*.yaml' -type f -exec sed -i "s#path: /mnt/models#path: $MOUNT_DIR#g" {} \;
     find . -name '*.yaml' -type f -exec sed -i "s#path: /mnt/opea-models#path: $MOUNT_DIR#g" {} \;
@@ -73,7 +70,8 @@ function cleanup_gmc() {
     if kubectl get namespace $SYSTEM_NAMESPACE > /dev/null 2>&1; then
         echo "Deleting namespace: $SYSTEM_NAMESPACE"
         kubectl delete namespace "$SYSTEM_NAMESPACE"
-        kubectl delete crd gmconnectors.gmc.opea.io
+        kubectl delete crd gmconnectors.gmc.opea.io || true
+        kubectl delete validatingwebhookconfigurations.admissionregistration.k8s.io validating-webhook-configuration  --ignore-not-found
     else
         echo "Namespace $SYSTEM_NAMESPACE does not exist"
     fi

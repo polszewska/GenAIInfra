@@ -7,6 +7,14 @@
 
 replicaCount: 1
 
+# Enabling HPA will:
+# - Ignore above replica count, as it will be controlled by HPA
+# - Add example HPA scaling rules with thresholds suitable for Xeon deployments
+# - Require custom metrics ConfigMap available in the main application chart
+horizontalPodAutoscaler:
+  maxReplicas: 3
+  enabled: false
+
 port: 2082
 shmSize: 1Gi
 RERANK_MODEL_ID: "BAAI/bge-reranker-base"
@@ -14,7 +22,10 @@ image:
   repository: ghcr.io/huggingface/text-embeddings-inference
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "cpu-1.2"
+  tag: "cpu-1.5"
+
+# empty for CPU
+accelDevice: ""
 
 imagePullSecrets: []
 nameOverride: ""
@@ -82,6 +93,16 @@ global:
   http_proxy: ""
   https_proxy: ""
   no_proxy: ""
-  # set modelUseHostPath to host directory if you want to use hostPath volume for model storage
-  # comment out modeluseHostPath if you want to download the model from huggingface
-  modelUseHostPath: /mnt/opea-models
+
+  # Choose where to save your downloaded models
+  # Set modelUseHostPath for local directory, this is good for one node test. Example:
+  # modelUseHostPath: /mnt/opea-models
+  # Set modelUsePVC for PersistentVolumeClaim(PVC), which is suitable for multinode deployment. Example:
+  # modelUsePVC: model-volume
+  # You can only set one of the following var, the behavior is not defined is both are set.
+  # By default, both var are set to empty, the model will be downloaded and saved to a tmp volume.
+  modelUseHostPath: ""
+  modelUsePVC: ""
+
+  # Prometheus Helm installation info for serviceMonitor
+  prometheusRelease: prometheus-stack
