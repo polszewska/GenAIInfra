@@ -1,7 +1,7 @@
 kind: BuildConfig
 apiVersion: build.openshift.io/v1
 metadata:
-  name: llm-tgi-server
+  name: {{ include "llm-uservice.fullname" . }}
   namespace: {{ .Release.Namespace }}
 spec:
   output:
@@ -17,11 +17,11 @@ spec:
   source:
     git:
       ref: {{ .Values.llmUservice.image.gitRef }}
-      uri: https://github.com/opea-project/GenAIComps.git
-    type: Git
+      uri: {{ .Values.llmUservice.image.gitUri }}
+    type: {{ .Values.llmUservice.image.type }}
   strategy:
-    type: Docker
+    type: {{ .Values.llmUservice.image.strategy.type }}
     dockerStrategy:
-      dockerfilePath: comps/llms/text-generation/tgi/Dockerfile
+      dockerfilePath: {{ .Values.llmUservice.image.strategy.dockerfilePath }}
   triggers:
   - type: ConfigChange

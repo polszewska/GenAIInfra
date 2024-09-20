@@ -3,3 +3,29 @@ llmUservice:
     repository: "insert-your-image-here"
     tag: "latest"
     gitRef: main
+    gitUri: https://github.com/opea-project/GenAIComps.git
+    pullPolicy: IfNotPresent
+    type: Git
+    strategy:
+      type: Docker
+      dockerfilePath: comps/llms/text-generation/tgi/Dockerfile
+
+replicaCount: 1
+
+TGI_LLM_ENDPOINT: "http://codegen-tgi:8080"
+PYTHONPATH: /home/user/.local/lib/python3.11/site-packages:/home/user
+HOME: /tmp/home
+
+startupProbe:
+  exec:
+    command:
+      - python
+      - -c
+      - 'import requests; req = requests.get("http://codegen-tgi:8080"); print(req)'
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 120
+
+service:
+  type: ClusterIP
+  port: 9000
