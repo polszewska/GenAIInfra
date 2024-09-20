@@ -1,20 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: codegen-tgi
+  name: {{ include "tgi.fullname" . }}
   labels:
-    helm.sh/chart: tgi-0.1.0
-    app.kubernetes.io/name: tgi
-    app.kubernetes.io/instance: codegen
-    app.kubernetes.io/version: "1.4"
-    app.kubernetes.io/managed-by: Helm
+    {{- include "tgi.labels" . | nindent 4 }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.service.type }}
   ports:
     - port: 8080
-      targetPort: 8080
+      targetPort: {{ .Values.port }}
       protocol: TCP
       name: tgi
   selector:
-    app.kubernetes.io/name: tgi
-    app.kubernetes.io/instance: codegen
+    {{- include "tgi.selectorLabels" . | nindent 4 }}

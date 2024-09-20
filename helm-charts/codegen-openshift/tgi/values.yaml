@@ -1,3 +1,13 @@
 model:
   id: ise-uiuc/Magicoder-S-DS-6.7B
   size: 50Gi
+
+replicaCount: 1
+
+port: 8080
+
+image:
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
