@@ -11,7 +11,16 @@ reactUi:
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: "latest"
-    gitRef: main
+
+source:
+  contextDir: CodeGen/ui
+  gitRef: main
+  gitUri: "https://github.com/opea-project/GenAIExamples.git"
+  type: Git
+
+strategy:
+  type: Docker
+  dockerfilePath: docker/Dockerfile.react
 
 imagePullSecrets: []
 nameOverride: ""

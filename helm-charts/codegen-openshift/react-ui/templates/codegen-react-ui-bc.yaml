@@ -23,17 +23,17 @@ spec:
   resources: {}
   runPolicy: SerialLatestOnly
   source:
-    contextDir: CodeGen/ui
+    contextDir: {{ .Values.source.contextDir }}
     git:
-      ref: {{ .Values.reactUi.image.gitRef }}
-      uri: https://github.com/opea-project/GenAIExamples.git
-    type: Git
+      ref: {{ .Values.source.gitRef }}
+      uri: {{ .Values.source.gitUri }}
+    type: {{ .Values.source.type }}
   strategy:
-    type: Docker
+    type: {{ .Values.strategy.type }}
     dockerStrategy:
       env:
       - name: VITE_CODE_GEN_URL
         value: https://codegen-react-ui-{{ .Release.Namespace }}.apps.{{ .Values.global.clusterDomain }}/v1/codegen
-      dockerfilePath: docker/Dockerfile.react
+      dockerfilePath: {{ .Values.strategy.dockerfilePath}}
   triggers:
   - type: ConfigChange
