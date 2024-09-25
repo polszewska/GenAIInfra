@@ -1,5 +1,5 @@
-image:
-  repository: "insert-your-image-here"
+image: 
+  repository: "insert-your-image-here"  # image-registry.openshift-image-registry.svc:5000/<namespace>/codegen
   tag: "latest"
   pullPolicy: IfNotPresent
 
@@ -14,7 +14,7 @@ strategy:
 
 replicaCount: 1
 
-PYTHONPATH: /home/user/.local/lib/python3.11/site-packages:/home/user
+PYTHONPATH: /home/user/.local/lib/python3.11/site-packages:/home/user  # don't edit unless you have a good reason
 HOME: /tmp/home
 
 service:
