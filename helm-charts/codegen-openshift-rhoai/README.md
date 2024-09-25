@@ -80,7 +80,7 @@ cd GenAIInfra/helm-charts/
 
 export NAMESPACE="insert-your-namespace-here"
 export CLUSTERDOMAIN="$(oc get Ingress.config.openshift.io/cluster -o jsonpath='{.spec.domain}' | sed 's/^apps.//')"
-export MODELNAME="insert-name-of-deployed-model-here"
+export MODELNAME="insert-name-of-deployed-model-here" (it refers to the *Name* from step 6 in **Deploy model in Red Hat Openshift AI**)
 export PROJECT="insert-project-name-where-model-is-deployed"
 
 sed -i "s/insert-your-namespace-here/${NAMESPACE}/g" codegen-openshift-rhoai/llm-uservice/values.yaml
