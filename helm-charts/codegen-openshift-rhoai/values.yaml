@@ -2,7 +2,7 @@ global:
   clusterDomain: "insert-your-cluster-domain-here"
 
 image:
-  repository: "insert-your-image-here"
+  repository: "insert-your-image-here"  # image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/codegen
   tag: "latest"
   pullPolicy: IfNotPresent
 
