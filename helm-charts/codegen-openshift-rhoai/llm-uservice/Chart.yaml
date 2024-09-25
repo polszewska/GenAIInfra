@@ -2,4 +2,4 @@ apiVersion: v2
 name: llm-uservice
 description: A Helm chart for deploying llm-uservice on Red Hat OpenShift with Red Hat OpenShift AI
 type: application
-version: 1.0
+version: 1.0.0
