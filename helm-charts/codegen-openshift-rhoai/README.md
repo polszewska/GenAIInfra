@@ -12,7 +12,7 @@ Serving runtime template in this example uses model *ise-uiuc/Magicoder-S-DS-6.7
 
 ## Deploy model in Red Hat Openshift AI
 
-1. Login to OpenShift CLI and run following commands to create new serving runtime. 
+1. Login to OpenShift CLI and run following commands to create new serving runtime and *hf-token* secret.
 ```
 cd GenAIInfra/helm-charts/codegen-openshift-rhoai/
 export HFTOKEN="insert-your-huggingface-token-here"
