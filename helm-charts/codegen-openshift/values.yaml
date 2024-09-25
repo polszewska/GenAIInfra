@@ -24,4 +24,3 @@ port: 7778
 service:
   type: ClusterIP
   port: 7778
-
