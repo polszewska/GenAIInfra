@@ -1,5 +1,5 @@
 image: 
-  repository: "insert-your-image-here"  # image-registry.openshift-image-registry.svc:5000/<namespace>/codegen
+  repository: "insert-your-image-here"  # image-registry.openshift-image-registry.svc:5000/<namespace>/llm-tgi
   tag: "latest"
   pullPolicy: IfNotPresent
 
