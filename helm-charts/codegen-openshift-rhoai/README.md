@@ -68,7 +68,7 @@ for filename in files:
     bucket.upload_file(filename, f'{path}{s3_name}')
 ```
 
-6. Go to your project in **Red Hat OpenShift AI** dashboard, then "Models" tab and click **Deploy model** under *Single-model serving platform*. Fill the **Name**, choose newly created **Serving runtime**: *Text Generation Inference Magicoder-S-DS-6.7B on CPU*, **Model framework**: *llm* and change **Model server size** to *Custom*: 16 CPUs and 64 Gi memory. Under **Model location** choose *New data connection* and fill all required fields for s3 access, **Bucket** *first.bucket* and **Path**: *models*. Click **Deploy**. It takes about 10 minutes to get *Loaded* status.\
+6. Go to your project in **Red Hat OpenShift AI** dashboard, then "Models" tab and click **Deploy model** under *Single-model serving platform*. Fill the **Name**, choose newly created **Serving runtime**: *Text Generation Inference Magicoder-S-DS-6.7B on CPU*, **Model framework**: *llm* and change **Model server size** to *Custom*: 16 CPUs and 64 Gi memory. Click the checkbox to create external route in **Model route** section and uncheck the **Token authentication**. Under **Model location** choose *New data connection* and fill all required fields for s3 access, **Bucket** *first.bucket* and **Path**: *models*. Click **Deploy**. It takes about 10 minutes to get *Loaded* status.\
 If it's not going to *Loaded* status and revision changed status to "ProgressDeadlineExceeded" (``oc get revision``), scale model deployment to 0 and than to 1 with command ``oc scale deployment.apps/<model_deployment_name> --replicas=1`` and wait about 10 minutes for deployment.
 
 ## Install the Chart
