@@ -30,7 +30,7 @@ spec:
                   key: HUGGING_FACE_HUB_TOKEN
                   name: hf-token
           securityContext: {}
-          image: "ghcr.io/huggingface/text-generation-inference:1.4"
+          image: "ghcr.io/huggingface/text-generation-inference:2.1.0"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
             - mountPath: /data
