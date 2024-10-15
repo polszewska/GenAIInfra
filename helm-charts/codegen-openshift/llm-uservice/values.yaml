@@ -15,7 +15,7 @@ strategy:
 replicaCount: 1
 
 TGI_LLM_ENDPOINT: "http://codegen-tgi:8080"  # if you change it, update also startupProbe@line 26
-PYTHONPATH: /home/user/.local/lib/python3.11/site-packages:/home/user
+PYTHONPATH: /home/user/.local/lib/python3.11/site-packages:/home/user  # don't edit unless you have a good reason
 HOME: /tmp/home
 
 startupProbe:
