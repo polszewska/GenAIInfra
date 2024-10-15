@@ -17,7 +17,7 @@ Serving runtime template in this example uses model *ise-uiuc/Magicoder-S-DS-6.7
 cd GenAIInfra/helm-charts/codegen-openshift-rhoai/
 export HFTOKEN="insert-your-huggingface-token-here"
 # To run on Xeon
-helm install servingruntime tgi --set global.huggingfaceApiToken=${HFTOKEN}
+helm install servingruntime tgi --set global.huggingfacehubApiToken=${HFTOKEN}
 ```
 Verify if template has been created with ```oc get template -A | grep tgi-magicoder``` command.
 
