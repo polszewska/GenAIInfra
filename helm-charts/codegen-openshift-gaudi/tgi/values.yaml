@@ -1,0 +1,13 @@
+model:
+  id: meta-llama/CodeLlama-7b-hf
+  size: 50Gi
+
+replicaCount: 1
+
+port: 8080
+
+image:
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
