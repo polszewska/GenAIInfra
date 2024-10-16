@@ -31,6 +31,11 @@ spec:
                   name: hf-token
           securityContext: {}
           image: "ghcr.io/huggingface/tgi-gaudi:2.0.1"
+          args:
+          - "--max-input-length"
+          - "1024"
+          - "--max-total-tokens"
+          - "2048"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
             - mountPath: /data
