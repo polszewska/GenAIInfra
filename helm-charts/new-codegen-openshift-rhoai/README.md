@@ -93,7 +93,6 @@ sed -i "s/insert-your-namespace-here/${NAMESPACE}/g" codegen-openshift-rhoai/llm
 ./update_dependency.sh
 helm dependency update codegen-openshift-rhoai
 
-# To run on Xeon
 helm install codegen codegen-openshift-rhoai --set image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/codegen --set llm-uservice.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/llm-tgi --set react-ui.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/react-ui --set global.clusterDomain=${CLUSTERDOMAIN} --set global.huggingfacehubApiToken=${HFTOKEN} --set llm-uservice.servingRuntime.name=${MODELNAME} --set llm-uservice.servingRuntime.namespace=${PROJECT}
 ``` 
 
