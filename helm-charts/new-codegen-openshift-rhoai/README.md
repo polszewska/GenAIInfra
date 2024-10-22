@@ -56,8 +56,13 @@ s3_resource = session.resource('s3',
                                aws_secret_access_key=s3_secretkey)
 bucket = s3_resource.Bucket(bucket_name)
 ```
+For Xeon download *ise-uiuc/Magicoder-S-DS-6.7B*:
 ```
 snapshot_download("ise-uiuc/Magicoder-S-DS-6.7B", cache_dir=f'./models', token=hf_token)
+```
+For Gaudi download *meta-llama/CodeLlama-7b-hf*
+```
+snapshot_download("meta-llama/CodeLlama-7b-hf", cache_dir=f'./models', token=hf_token)
 ```
 ```
 files = (file for file in glob.glob(f'{path}/**/*', recursive=True) if os.path.isfile(file) and "snapshots" in file)
