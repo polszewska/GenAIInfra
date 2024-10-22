@@ -2,6 +2,10 @@
 
 Helm chart for deploying CodeGen service on Red Hat OpenShift.
 
+# Prerequisites
+1. Red Hat OpenShift Cluster with dynamic StorageClass to provision PersistentVolumes e.g. OpenShift Data Foundation)
+2. Account on https://huggingface.co/, access to model *ise-uiuc/Magicoder-S-DS-6.7B* (for Xeon) or *meta-llama/CodeLlama-7b-hf* (for Gaudi) and token with Read permissions.
+
 ## Installing the Chart
 
 To install the chart, run the following:
@@ -17,6 +21,9 @@ export HFTOKEN="insert-your-huggingface-token-here"
 
 # To run on Xeon
 helm install codegen codegen-openshift --set image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/codegen --set llm-uservice.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/llm-tgi --set react-ui.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/react-ui --set global.clusterDomain=${CLUSTERDOMAIN} --set global.huggingfacehubApiToken=${HFTOKEN}
+
+# To run on Gaudi
+helm install codegen codegen-openshift --set image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/codegen --set llm-uservice.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/llm-tgi --set react-ui.image.repository=image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/react-ui --set global.clusterDomain=${CLUSTERDOMAIN} --set global.huggingfacehubApiToken=${HFTOKEN} --values codegen-openshift/gaudi-values.yaml
 ```
 
 ## Verify
