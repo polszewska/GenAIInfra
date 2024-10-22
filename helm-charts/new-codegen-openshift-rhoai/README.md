@@ -60,7 +60,7 @@ For Xeon download *ise-uiuc/Magicoder-S-DS-6.7B*:
 ```
 snapshot_download("ise-uiuc/Magicoder-S-DS-6.7B", cache_dir=f'./models', token=hf_token)
 ```
-For Gaudi download *meta-llama/CodeLlama-7b-hf*
+For Gaudi download *meta-llama/CodeLlama-7b-hf*:
 ```
 snapshot_download("meta-llama/CodeLlama-7b-hf", cache_dir=f'./models', token=hf_token)
 ```
