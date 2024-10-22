@@ -66,4 +66,5 @@ objects:
           sizeLimit: 300Gi
         name: model-volume
       - emptyDir:
+          sizeLimit: 500Mi
         name: logs-volume
