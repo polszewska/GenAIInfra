@@ -64,6 +64,7 @@ For Gaudi download *meta-llama/CodeLlama-7b-hf*
 ```
 snapshot_download("meta-llama/CodeLlama-7b-hf", cache_dir=f'./models', token=hf_token)
 ```
+Upload the downloaded model to S3:
 ```
 files = (file for file in glob.glob(f'{path}/**/*', recursive=True) if os.path.isfile(file) and "snapshots" in file)
 for filename in files:
