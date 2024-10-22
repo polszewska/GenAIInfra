@@ -76,7 +76,7 @@ rbac:
       subjects:
         kind: ServiceAccount
         name: codegen-sa
-        namespace: new-test
+        namespace: insert-your-namespace-here
         apiGroup: ""
       roleRef:
         kind: ClusterRole
