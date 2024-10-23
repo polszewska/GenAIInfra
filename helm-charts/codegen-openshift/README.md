@@ -8,7 +8,7 @@ Helm chart for deploying CodeGen service on Red Hat OpenShift.
 
 ## Installing the Chart
 
-To install the chart, run the following:
+To install the chart, login to OpenShift CLI, go to your project and run the following:
 
 ```console
 cd GenAIInfra/helm-charts/
