@@ -78,7 +78,7 @@ If it's not going to *Loaded* status and revision changed status to "ProgressDea
 
 ## Install the Chart
 
-To install the chart, back to OpenShift CLI and run the following:
+To install the chart, back to OpenShift CLI, go to your project and run the following:
 
 ```console
 cd GenAIInfra/helm-charts/
