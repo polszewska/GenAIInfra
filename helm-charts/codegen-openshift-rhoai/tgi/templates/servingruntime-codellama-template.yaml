@@ -42,7 +42,7 @@ objects:
               secretKeyRef:
                 key: HUGGING_FACE_HUB_TOKEN
                 name: hf-token
-        image: ghcr.io/huggingface/tgi-gaudi:2.0.1
+        image: ghcr.io/huggingface/tgi-gaudi:2.0.4
         name: kserve-container
         ports:
           - containerPort: 8080
