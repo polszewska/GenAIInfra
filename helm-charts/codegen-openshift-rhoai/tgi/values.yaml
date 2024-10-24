@@ -1,2 +1,12 @@
 global:
   huggingfacehubApiToken: "insert-your-huggingface-token-here"
+  
+gaudi:
+  image:
+    repository: ghcr.io/huggingface/tgi-gaudi
+    tag: 2.0.4
+    
+cpu:
+  image:
+    repository: ghcr.io/huggingface/text-generation-inference
+    tag: 2.1.0
