@@ -1,0 +1,26 @@
+global:
+  clusterDomain: "insert-your-cluster-domain-here"
+  huggingfacehubApiToken: "insert-your-huggingface-token-here"
+
+image:
+  repository: "insert-your-image-here"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+source:
+  contextDir: CodeGen
+  gitRef: d73129c
+  gitUri: "https://github.com/opea-project/GenAIExamples.git"
+  type: Git
+
+strategy:
+  type: Docker
+  dockerfilePath: Dockerfile
+
+replicaCount: 1
+
+port: 7778
+
+service:
+  type: ClusterIP
+  port: 7778
