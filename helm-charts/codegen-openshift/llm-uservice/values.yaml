@@ -4,7 +4,7 @@ image:
   pullPolicy: IfNotPresent
 
 source:
-  gitRef: main
+  gitRef: 6518c0f
   gitUri: https://github.com/opea-project/GenAIComps.git
   type: Git
 
