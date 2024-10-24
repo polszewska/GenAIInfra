@@ -9,7 +9,7 @@ image:
 
 source:
   contextDir: CodeGen
-  gitRef: main
+  gitRef: d73129c
   gitUri: "https://github.com/opea-project/GenAIExamples.git"
   type: Git
 
