@@ -4,7 +4,8 @@ Helm chart for deploying CodeGen service on Red Hat OpenShift.
 
 # Prerequisites
 1. Red Hat OpenShift Cluster with dynamic StorageClass to provision PersistentVolumes e.g. OpenShift Data Foundation)
-2. Account on https://huggingface.co/, access to model *ise-uiuc/Magicoder-S-DS-6.7B* (for Xeon) or *meta-llama/CodeLlama-7b-hf* (for Gaudi) and token with Read permissions.
+2. Image registry to push there docker images (https://docs.openshift.com/container-platform/4.16/registry/securing-exposing-registry.html).
+3. Account on https://huggingface.co/, access to model *ise-uiuc/Magicoder-S-DS-6.7B* (for Xeon) or *meta-llama/CodeLlama-7b-hf* (for Gaudi) and token with Read permissions.
 
 ## Installing the Chart
 
