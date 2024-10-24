@@ -7,8 +7,9 @@ Serving runtime template in this example uses model *ise-uiuc/Magicoder-S-DS-6.7
 ## Prerequisites 
 
 1. **Red Hat OpenShift Cluster** with dynamic *StorageClass* to provision *PersistentVolumes* e.g. **OpenShift Data Foundation**) and installed Operators: **Red Hat - Authorino (Technical Preview)**, **Red Hat OpenShift Service Mesh**, **Red Hat OpenShift Serverless** and **Red Hat Openshift AI**.
-2. Access to S3-compatible object storage bucket (e.g. **OpenShift Data Foundation**, **AWS S3**) and values of access and secret access keys and S3 endpoint (https://docs.redhat.com/en/documentation/red_hat_openshift_data_foundation/4.16/html/managing_hybrid_and_multicloud_resources/accessing-the-multicloud-object-gateway-with-your-applications_rhodf#accessing-the-multicloud-object-gateway-with-your-applications_rhodf).
-3. Account on https://huggingface.co/, access to model *ise-uiuc/Magicoder-S-DS-6.7B* (for Xeon) or *meta-llama/CodeLlama-7b-hf* (for Gaudi) and token with Read permissions.
+2. Image registry to push there docker images (https://docs.openshift.com/container-platform/4.16/registry/securing-exposing-registry.html).
+3. Access to S3-compatible object storage bucket (e.g. **OpenShift Data Foundation**, **AWS S3**) and values of access and secret access keys and S3 endpoint (https://docs.redhat.com/en/documentation/red_hat_openshift_data_foundation/4.16/html/managing_hybrid_and_multicloud_resources/accessing-the-multicloud-object-gateway-with-your-applications_rhodf#accessing-the-multicloud-object-gateway-with-your-applications_rhodf).
+4. Account on https://huggingface.co/, access to model *ise-uiuc/Magicoder-S-DS-6.7B* (for Xeon) or *meta-llama/CodeLlama-7b-hf* (for Gaudi) and token with Read permissions.
 
 ## Deploy model in Red Hat Openshift AI
 
