@@ -97,4 +97,4 @@ source:
 
 strategy:
   type: Docker
-  dockerfilePath: comps/embeddings/langchain/docker/Dockerfile
+  dockerfilePath: comps/embeddings/tei/langchain/Dockerfile
