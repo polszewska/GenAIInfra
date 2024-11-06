@@ -26,8 +26,7 @@ image:
   repository: ghcr.io/huggingface/text-generation-inference
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  # `sha-e4201f4-intel-cpu` is the image tag for intel cpu optimized tgi image
-  tag: "sha-e4201f4-intel-cpu"
+  tag: "2.4.0-intel-cpu"
 
 # empty for CPU
 accelDevice: ""
@@ -138,5 +137,8 @@ global:
   modelUseHostPath: ""
   modelUsePVC: ""
 
-  # Prometheus Helm installation info for serviceMonitor
+  # Install Prometheus serviceMonitor for service
+  monitoring: false
+
+  # Prometheus Helm install release name for serviceMonitor
   prometheusRelease: prometheus-stack
